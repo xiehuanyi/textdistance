@@ -56,7 +56,7 @@ class LCSSeq(_BaseSimilarity):
         # row 0 and column 0 are initialized to 0 already
         for i, char1 in enumerate(seq1):
             for j, char2 in enumerate(seq2):
-                if char1 == char2:
+                if self.test_func(char1, char2):
                     lengths[i + 1][j + 1] = lengths[i][j] + 1
                 else:
                     lengths[i + 1][j + 1] = max(lengths[i + 1][j], lengths[i][j + 1])
@@ -70,7 +70,7 @@ class LCSSeq(_BaseSimilarity):
             elif lengths[i][j] == lengths[i][j - 1]:
                 j -= 1
             else:
-                assert seq1[i - 1] == seq2[j - 1]
+                assert self.test_func(seq1[i - 1], seq2[j - 1])
                 result = seq1[i - 1] + result
                 i -= 1
                 j -= 1

@@ -39,3 +39,28 @@ def test_distance_multiseq(seqs, expected):
 
     actual = ALG(external=True)(*seqs)
     assert actual == expected
+
+
+@pytest.mark.parametrize('use_numpy', [True, False])
+@pytest.mark.parametrize('left, right, expected', [
+    ('ABC', 'abc', 'ABC'),
+    ('AxB', 'ab', 'AB'),
+    ('abc', 'XYZ', ''),
+])
+def test_custom_comparator(left, right, expected, use_numpy, monkeypatch):
+    # built-in
+    from array import array
+
+    # project
+    from textdistance.algorithms import sequence_based
+
+    if not use_numpy:
+        monkeypatch.setattr(sequence_based, 'numpy', None)
+        monkeypatch.setattr(sequence_based, 'array', array, raising=False)
+
+    def ignore_case(*characters):
+        return len({character.lower() for character in characters}) == 1
+
+    algorithm = ALG(test_func=ignore_case, external=False)
+    assert algorithm(left, right) == expected
+    assert algorithm.similarity(left, right) == len(expected)
