@@ -39,3 +39,24 @@ def test_distance_multiseq(seqs, expected):
 
     actual = ALG(external=True)(*seqs)
     assert actual == expected
+
+
+@pytest.mark.parametrize('qval, sequences, expected', [
+    (2, ('abcd', 'bcde'), [('b', 'c'), ('c', 'd')]),
+    (2, ('abcd', 'bcde', 'xbcd'), [('b', 'c'), ('c', 'd')]),
+    (2, ('abcd', 'wxyz'), []),
+    (None, ('one two three', 'zero two three'), ['two', 'three']),
+    (None, ('one two three', 'two three four', 'zero two three'), ['two', 'three']),
+    (None, ('one two',), ['one', 'two']),
+])
+def test_prepared_subsequences(qval, sequences, expected):
+    algorithm = ALG(qval=qval, external=False)
+    assert algorithm(*sequences) == expected
+    assert algorithm.similarity(*sequences) == len(expected)
+
+
+@pytest.mark.parametrize('qval, sequence', [(None, 'one two'), (2, 'abcd')])
+def test_prepared_subsequence_normalization(qval, sequence):
+    algorithm = ALG(qval=qval, external=False)
+    assert algorithm.normalized_similarity(sequence, sequence) == 1
+    assert algorithm.normalized_distance(sequence, sequence) == 0

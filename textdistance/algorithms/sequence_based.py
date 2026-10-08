@@ -41,7 +41,7 @@ class LCSSeq(_BaseSimilarity):
         self.test_func = test_func or self._ident
         self.external = external
 
-    def _dynamic(self, seq1: str, seq2: str) -> str:
+    def _dynamic(self, seq1: str, seq2: str) -> Any:
         """
         https://github.com/chrislit/abydos/blob/master/abydos/distance/_lcsseq.py
         http://www.dis.uniroma1.it/~bonifaci/algo/LCSSEQ.py
@@ -62,7 +62,7 @@ class LCSSeq(_BaseSimilarity):
                     lengths[i + 1][j + 1] = max(lengths[i + 1][j], lengths[i][j + 1])
 
         # read the substring out from the matrix
-        result = ''
+        result: Any = seq1[:0]
         i, j = len(seq1), len(seq2)
         while i != 0 and j != 0:
             if lengths[i][j] == lengths[i - 1][j]:
@@ -71,25 +71,25 @@ class LCSSeq(_BaseSimilarity):
                 j -= 1
             else:
                 assert seq1[i - 1] == seq2[j - 1]
-                result = seq1[i - 1] + result
+                result = seq1[i - 1:i] + result
                 i -= 1
                 j -= 1
         return result
 
-    def _recursive(self, *sequences: str) -> str:
+    def _recursive(self, *sequences: str) -> Any:
         if not all(sequences):
             return type(sequences[0])()  # empty sequence
         if self.test_func(*[s[-1] for s in sequences]):
-            c = sequences[0][-1]
+            c = sequences[0][-1:]
             sequences = tuple(s[:-1] for s in sequences)
-            return self(*sequences) + c
+            return self._recursive(*sequences) + c
         m = type(sequences[0])()  # empty sequence
         for i, s in enumerate(sequences):
             ss = sequences[:i] + (s[:-1], ) + sequences[i + 1:]
-            m = max([self(*ss), m], key=len)
+            m = max([self._recursive(*ss), m], key=len)
         return m
 
-    def __call__(self, *sequences: str) -> str:
+    def __call__(self, *sequences: str) -> Any:
         if not sequences:
             return ''
         sequences = self._get_sequences(*sequences)
@@ -97,6 +97,9 @@ class LCSSeq(_BaseSimilarity):
             return self._dynamic(*sequences)
         else:
             return self._recursive(*sequences)
+
+    def maximum(self, *sequences: str) -> int:
+        return max(map(len, self._get_sequences(*sequences)))
 
     def similarity(self, *sequences) -> int:
         return len(self(*sequences))
